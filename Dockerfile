@@ -16,7 +16,6 @@ WORKDIR /home/site/wwwroot
 
 RUN pip install -r requirements.txt --no-cache --no-cache-dir
 RUN mv supervisord.conf /etc/supervisor/supervisord.conf
-RUN apt remove git -y && apt autoremove -y && apt autoclean -y
 
 # Expose the port that the app will run on
 EXPOSE 80

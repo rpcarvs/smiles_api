@@ -7,7 +7,8 @@ import uvicorn
 from anima.smiles import SMILES
 from azure.identity import DefaultAzureCredential
 from azure.keyvault.secrets import SecretClient
-from fastapi import Body, Depends, FastAPI, HTTPException, Request
+from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 VAULT_URL = "https://rodc-kv.vault.azure.net/"
@@ -18,8 +19,15 @@ credential = DefaultAzureCredential()
 client = SecretClient(vault_url=VAULT_URL, credential=credential)
 SECRET_KEY = client.get_secret(SECRET_NAME).value
 
-app = FastAPI()
 sml = SMILES()
+app = FastAPI(title="SMILES-API")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 max_length = 54
 vocab = [
@@ -64,7 +72,7 @@ def verify_key(request: Request):
     return True
 
 
-@app.post("/transform-smiles")
+@app.post("/transform-smiles", status_code=status.HTTP_200_OK)
 def prepare_and_transform(
     __valid: bool = Depends(verify_key),
     payload: Payload = Body(...),
@@ -81,7 +89,7 @@ def prepare_and_transform(
     return {"smiles": message}
 
 
-@app.get("/")
+@app.get("/", status_code=status.HTTP_200_OK)
 async def index(__valid: bool = Depends(verify_key)):
     return {
         "info": "SMILES-API up",

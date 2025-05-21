@@ -1,5 +1,7 @@
 dev
 .DS_Store
+.funcignore
+.vscode
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
