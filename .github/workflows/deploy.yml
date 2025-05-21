@@ -34,4 +34,3 @@ jobs:
         with:
           app-name: "smiles-api"
           image: "mrcvregistry-hrdvere2a3d7e4dh.azurecr.io/smiles_api:${{ github.sha }}"
-          resource-group: "anima-rg-435"
