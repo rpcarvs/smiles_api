@@ -1,0 +1,12 @@
+anima@git+https://github.com/rpcarvs/anima.git
+pydantic
+numpy
+rdkit
+pysmiles
+joblib
+openbabel-wheel==3.1.1.21
+fastapi
+uvicorn
+azure-identity
+azure-keyvault-secrets
+azure-functions

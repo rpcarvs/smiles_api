@@ -1,0 +1,21 @@
+[project]
+name = "smiles-api"
+version = "0.1.0"
+description = "Simple api to process SMILES for ANIMA/AI Kernel inference"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anima@git+https://github.com/rpcarvs/anima.git",
+    "pydantic",
+    "numpy",
+    "rdkit",
+    "pysmiles",
+    "joblib",
+    "openbabel-wheel==3.1.1.21",
+    "fastapi",
+    "uvicorn",
+]
+
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
