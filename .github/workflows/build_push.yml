@@ -28,9 +28,3 @@ jobs:
       - name: Push Docker image to Azure Container Registry
         run: |
           docker push rcvregistry-hrdvere2a3d7e4dh.azurecr.io/smiles_api:${{ github.sha }}
-
-      - name: Deploy to Azure Functions
-        uses: Azure/functions-container-action@v1
-        with:
-          app-name: "smiles-api"
-          image: "rcvregistry-hrdvere2a3d7e4dh.azurecr.io/smiles_api:${{ github.sha }}"
