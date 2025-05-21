@@ -81,8 +81,15 @@ def prepare_and_transform(
     return {"smiles": message}
 
 
+@app.get("/")
+async def index(__valid: bool = Depends(verify_key)):
+    return {
+        "info": "SMILES-API up",
+    }
+
+
 # Wrap FastAPI app with Azure Functions
-function_app = func.AsgiFunctionApp(app=app)
+function_app = func.AsgiFunctionApp(app=app, http_auth_level=func.AuthLevel.ANONYMOUS)
 
 
 if __name__ == "__main__":
