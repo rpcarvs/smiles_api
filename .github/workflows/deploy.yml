@@ -33,4 +33,4 @@ jobs:
         uses: Azure/functions-container-action@v1
         with:
           app-name: "smiles-api"
-          image: "mrcvregistry-hrdvere2a3d7e4dh.azurecr.io/smiles_api:${{ github.sha }}"
+          image: "rcvregistry-hrdvere2a3d7e4dh.azurecr.io/smiles_api:${{ github.sha }}"
