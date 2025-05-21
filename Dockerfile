@@ -19,6 +19,6 @@ RUN mv supervisord.conf /etc/supervisor/supervisord.conf
 RUN apt remove git -y && apt autoremove -y && apt autoclean -y
 
 # Expose the port that the app will run on
-EXPOSE 3100
+EXPOSE 80
 
 ENTRYPOINT ["supervisord"]
