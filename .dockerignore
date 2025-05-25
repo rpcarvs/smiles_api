@@ -9,6 +9,7 @@ venv/
 ENV/
 .venv/
 *.egg-info
+dev
 
 # General ignores
 .git
