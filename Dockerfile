@@ -1,23 +1,23 @@
-FROM mcr.microsoft.com/azure-functions/python:4-python3.11-slim
-
-ENV AzureWebJobsScriptRoot=/home/site/wwwroot \
-    AzureFunctionsJobHost__Logging__Console__IsEnabled=true 
+FROM python:3.12-slim-bookworm
 
 RUN apt update && apt install -y \
     openssh-client \
     git \
-    supervisor \
     openbabel \
-    libopenbabel-dev
+    libopenbabel-dev \
+    && rm -rf /var/lib/apt/lists/*
 
-# no root for the api
-COPY . /home/site/wwwroot
-WORKDIR /home/site/wwwroot
-
+COPY requirements.txt .
 RUN pip install -r requirements.txt --no-cache --no-cache-dir
-RUN mv supervisord.conf /etc/supervisor/supervisord.conf
 
-# Expose the port that the app will run on
-EXPOSE 80
+WORKDIR /var/task
+COPY app/ ./app/
+ENV PYTHONPATH=/var/task
 
-ENTRYPOINT ["supervisord"]
+#for local testing
+# ADD aws-lambda-rie /usr/local/bin/aws-lambda-rie
+# RUN chmod +x /usr/local/bin/aws-lambda-rie
+# ENTRYPOINT ["/usr/local/bin/aws-lambda-rie", "python", "-m", "awslambdaric"]
+
+ENTRYPOINT ["python", "-m", "awslambdaric"]
+CMD ["app.smiles_api.lambda_handler"]

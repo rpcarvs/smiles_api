@@ -1,23 +1,30 @@
 import hashlib
 import hmac
-from typing import Annotated
+import os
+from typing import Annotated, Literal
 
-import azure.functions as func
-import uvicorn
+import boto3
 from anima.smiles import SMILES
-from azure.identity import DefaultAzureCredential
-from azure.keyvault.secrets import SecretClient
 from fastapi import Body, Depends, FastAPI, HTTPException, Request, status
 from fastapi.middleware.cors import CORSMiddleware
+from mangum import Mangum
 from pydantic import BaseModel, Field
 
-VAULT_URL = "https://rodc-kv.vault.azure.net/"
-SECRET_NAME = "smilestoken"
+
+def get_secret_from_ssm(param_name: str, region: str = "eu-north-1") -> str:
+    """
+    Retrieve a SecureString parameter from AWS SSM Parameter Store.
+
+    The parameter value is automatically decrypted using the KMS key specified
+    during creation.
+    """
+    ssm_client = boto3.client("ssm", region_name=region)
+    response = ssm_client.get_parameter(Name=param_name, WithDecryption=True)
+    return response["Parameter"]["Value"]
 
 
-credential = DefaultAzureCredential()
-client = SecretClient(vault_url=VAULT_URL, credential=credential)
-SECRET_KEY = client.get_secret(SECRET_NAME).value
+SSM_PARAM_NAME = os.environ.get("SECRET_KEY_PARAM_NAME", "")
+SECRET_KEY = get_secret_from_ssm(SSM_PARAM_NAME)
 
 sml = SMILES()
 app = FastAPI(title="SMILES-API")
@@ -58,14 +65,14 @@ class Payload(BaseModel):
     smiles: Annotated[str, Field(max_length=max_length)]
 
 
-def safe_check(client_key, stored_key):
+def safe_check(client_key: str, stored_key: str) -> bool:
     return hmac.compare_digest(
         hashlib.sha256(client_key.encode()).digest(),
         hashlib.sha256(stored_key.encode()).digest(),
     )
 
 
-def verify_key(request: Request):
+def verify_key(request: Request) -> Literal[True]:
     client_key = request.headers.get("SMILES_API_KEY")
     if not client_key or not safe_check(client_key, SECRET_KEY):
         raise HTTPException(status_code=403, detail="Invalid API Key")
@@ -74,8 +81,8 @@ def verify_key(request: Request):
 
 @app.post("/transform-smiles", status_code=status.HTTP_200_OK)
 def prepare_and_transform(
-    __valid: bool = Depends(verify_key),
-    payload: Payload = Body(...),
+    valid: Annotated[bool, Depends(verify_key)],
+    payload: Annotated[Payload, Body(...)],
 ):
     try:
         molecule = payload.smiles
@@ -90,15 +97,13 @@ def prepare_and_transform(
 
 
 @app.get("/", status_code=status.HTTP_200_OK)
-async def index(__valid: bool = Depends(verify_key)):
+async def index(valid: Annotated[bool, Depends(verify_key)], /) -> dict[str, str]:
     return {
         "info": "SMILES-API up",
     }
 
 
-# Wrap FastAPI app with Azure Functions
-function_app = func.AsgiFunctionApp(app=app, http_auth_level=func.AuthLevel.ANONYMOUS)
-
-
-if __name__ == "__main__":
-    uvicorn.run("smiles_api:app", host="0.0.0.0", port=80)
+# the aws handler
+def lambda_handler(event, context):
+    handler = Mangum(app)
+    return handler(event, context)
